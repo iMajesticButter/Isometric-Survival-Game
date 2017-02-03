@@ -31,19 +31,18 @@ public class Endlesness : MonoBehaviour {
     Dictionary<Vector2, TerrainTile> tileDictionary = new Dictionary<Vector2, TerrainTile>();
     List<TerrainTile> tilesVisableLastUpdate = new List<TerrainTile>();
 
-    public static Dictionary<Vector2, TileObj> ObjDict = new Dictionary<Vector2, TileObj>();
     void Start()
     {
 
         chunkSize = 1;
         chunksVisinViewDst = Mathf.RoundToInt(maxViewDist / chunkSize);
-        Debug.Log(SaveLoad.LoadObjDict("Save.save"));
+        TileObjectStor.ObjDict = SaveLoad.LoadObjDict("Save.save");
         
     }
 
     void Update()
     {
-        SaveLoad.SaveObjDict(ObjDict, "Save.save");
+        SaveLoad.SaveObjDict(TileObjectStor.ObjDict, "Save.save");
         viewerPos = new Vector2(viewer.position.x, viewer.position.y);
         UpdateVisChunks();
     }
@@ -99,7 +98,7 @@ public class TerrainTile
         Vector3 posV3 = new Vector3(pos.x, pos.y, 0);
         float biome = GenWorld.GenBiomeMap(scale, seed, coord);
 
-        //set color of the tile
+        //set type of the tile
         if (biome < 0.2)
         {
             sprite = GameObject.Instantiate(water);
@@ -133,63 +132,108 @@ public class TerrainTile
         {
             sprite.transform.Rotate(0, 0, 270);
         }
-        rand = Random.Range(0, 10);
-        Mathf.RoundToInt(rand);
-        if (rand <= 1)
+        //tile object generating and loading
+        if (!TileObjectStor.ObjDict.ContainsKey(coord))
         {
-            posV3 = new Vector3(pos.x, pos.y, -1);
-            if (biome < 0.2)
+            rand = Random.Range(0, 10);
+            Mathf.RoundToInt(rand);
+            if (rand <= 1)
             {
-                rand = Random.Range(0, 1);
-                if (rand < 0.8)
+                posV3 = new Vector3(pos.x, pos.y, -1);
+                if (biome < 0.2)
                 {
-                    TileObject = GameObject.Instantiate(lilipad);
-                    BoxCollider boxCol = sprite.GetComponent<BoxCollider>();
-                    boxCol.enabled = false;
-                    Endlesness.ObjDict.Add(coord, TileObj.lilipad);
+                    rand = Random.Range(0, 1);
+                    if (rand < 0.8)
+                    {
+                        TileObject = GameObject.Instantiate(lilipad);
+                        BoxCollider boxCol = sprite.GetComponent<BoxCollider>();
+                        boxCol.enabled = false;
+                        TileObjectStor.ObjDict.Add(coord, TileObj.lilipad);
+                    }
+                    else
+                    {
+                        TileObject = GameObject.Instantiate(driftwood);
+                        TileObjectStor.ObjDict.Add(coord, TileObj.driftwood);
+                    }
                 }
-                else
-                {
-                    TileObject = GameObject.Instantiate(driftwood);
-                    Endlesness.ObjDict.Add(coord, TileObj.driftwood);
-                }
-            }
-            if (biome < 0.3 && biome > 0.2)
-            {
-                TileObject = GameObject.Instantiate(rock);
-                Endlesness.ObjDict.Add(coord, TileObj.rock);
-            }
-            if (biome < 0.7 && biome > 0.3)
-            {
-                rand = Random.Range(0, 3);
-                Mathf.RoundToInt(rand);
-                if (rand == 0)
+                if (biome < 0.3 && biome > 0.2)
                 {
                     TileObject = GameObject.Instantiate(rock);
-                    Endlesness.ObjDict.Add(coord, TileObj.rock);
+                    TileObjectStor.ObjDict.Add(coord, TileObj.rock);
                 }
-                else if (rand == 1)
+                if (biome < 0.7 && biome > 0.3)
                 {
-                    posV3 = new Vector3(pos.x, pos.y, -15);
-                    TileObject = GameObject.Instantiate(tree);
-                    Endlesness.ObjDict.Add(coord, TileObj.tree);
+                    rand = Random.Range(0, 3);
+                    Mathf.RoundToInt(rand);
+                    if (rand == 0)
+                    {
+                        TileObject = GameObject.Instantiate(rock);
+                        TileObjectStor.ObjDict.Add(coord, TileObj.rock);
+                    }
+                    else if (rand == 1)
+                    {
+                        posV3 = new Vector3(pos.x, pos.y, -15);
+                        TileObject = GameObject.Instantiate(tree);
+                        TileObjectStor.ObjDict.Add(coord, TileObj.tree);
+                    }
+                    else
+                    {
+                        TileObject = GameObject.Instantiate(grass);
+                        TileObjectStor.ObjDict.Add(coord, TileObj.grass);
+                    }
                 }
-                else
+                if (biome < 0.7)
                 {
-                    TileObject = GameObject.Instantiate(grass);
-                    Endlesness.ObjDict.Add(coord, TileObj.grass);
+                    TileObject.transform.position = posV3;
+                    TileObject.transform.localScale = Vector3.one * size;
+
                 }
             }
-            if (biome < 0.7)
+            else
             {
-                TileObject.transform.position = posV3;
-                TileObject.transform.localScale = Vector3.one * size;
-                
+                TileObjectStor.ObjDict.Add(coord, TileObj.none);
             }
         }
         else
         {
-            Endlesness.ObjDict.Add(coord, TileObj.none);
+            posV3 = new Vector3(pos.x, pos.y, -1);
+            //load saved tileobj
+            Debug.Log(coord);
+            if (TileObjectStor.ObjDict[coord] == TileObj.driftwood)
+            {
+                Debug.Log("Drift Wood");
+                TileObject = GameObject.Instantiate(driftwood);
+            }
+            else if (TileObjectStor.ObjDict[coord] == TileObj.grass)
+            {
+                Debug.Log("Long Grass");
+                TileObject = GameObject.Instantiate(grass);
+            }
+            else if (TileObjectStor.ObjDict[coord] == TileObj.lilipad)
+            {
+                Debug.Log("Lilipad");
+                TileObject = GameObject.Instantiate(lilipad);
+            }
+            else if (TileObjectStor.ObjDict[coord] == TileObj.none)
+            {
+                Debug.Log("Nothing");
+            }
+            else if (TileObjectStor.ObjDict[coord] == TileObj.rock)
+            {
+                Debug.Log("Rock");
+                TileObject = GameObject.Instantiate(rock);
+            }
+            else if (TileObjectStor.ObjDict[coord] == TileObj.tree)
+            {
+                Debug.Log("Tree");
+                TileObject = GameObject.Instantiate(tree);
+                posV3 = new Vector3(pos.x, pos.y, -15);
+            }
+            if (TileObject != null)
+            {
+                TileObject.transform.position = posV3;
+                TileObject.transform.localScale = Vector3.one * size;
+            }
         }
         SetVis(false);
     }
