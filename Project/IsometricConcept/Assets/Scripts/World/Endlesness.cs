@@ -28,7 +28,7 @@ public class Endlesness : MonoBehaviour {
 
     
 
-    Dictionary<Vector2, TerrainTile> tileDictionary = new Dictionary<Vector2, TerrainTile>();
+    public static Dictionary<Vector2, TerrainTile> tileDictionary = new Dictionary<Vector2, TerrainTile>();
     List<TerrainTile> tilesVisableLastUpdate = new List<TerrainTile>();
 
     void Start()
@@ -82,9 +82,12 @@ public class Endlesness : MonoBehaviour {
         }
     }
 
-    
+    public static void DestroyGameObject(GameObject Obj)
+    {
+        Destroy(Obj);
+    }
 }
-public class TerrainTile
+public class TerrainTile 
 {
     GameObject sprite;
     GameObject TileObject;
@@ -198,36 +201,28 @@ public class TerrainTile
         {
             posV3 = new Vector3(pos.x, pos.y, -1);
             //load saved tileobj
-            Debug.Log(coord);
-            if (TileObjectStor.ObjDict[coord] == TileObj.driftwood)
+            switch (TileObjectStor.ObjDict[coord])
             {
-                Debug.Log("Drift Wood");
-                TileObject = GameObject.Instantiate(driftwood);
-            }
-            else if (TileObjectStor.ObjDict[coord] == TileObj.grass)
-            {
-                Debug.Log("Long Grass");
-                TileObject = GameObject.Instantiate(grass);
-            }
-            else if (TileObjectStor.ObjDict[coord] == TileObj.lilipad)
-            {
-                Debug.Log("Lilipad");
-                TileObject = GameObject.Instantiate(lilipad);
-            }
-            else if (TileObjectStor.ObjDict[coord] == TileObj.none)
-            {
-                Debug.Log("Nothing");
-            }
-            else if (TileObjectStor.ObjDict[coord] == TileObj.rock)
-            {
-                Debug.Log("Rock");
-                TileObject = GameObject.Instantiate(rock);
-            }
-            else if (TileObjectStor.ObjDict[coord] == TileObj.tree)
-            {
-                Debug.Log("Tree");
-                TileObject = GameObject.Instantiate(tree);
-                posV3 = new Vector3(pos.x, pos.y, -15);
+                case TileObj.driftwood:
+                    TileObject = GameObject.Instantiate(driftwood);
+                    break;
+                case TileObj.grass:
+                    TileObject = GameObject.Instantiate(grass);
+                    break;
+                case TileObj.lilipad:
+                    TileObject = GameObject.Instantiate(lilipad);
+                    break;
+                case TileObj.none:
+                    break;
+                case TileObj.rock:
+                    TileObject = GameObject.Instantiate(rock);
+                    break;
+                case TileObj.tree:
+                    TileObject = GameObject.Instantiate(tree);
+                    posV3 = new Vector3(pos.x, pos.y, -15);
+                    break;
+                default:
+                    break;
             }
             if (TileObject != null)
             {
@@ -251,6 +246,31 @@ public class TerrainTile
         {
             TileObject.SetActive(vis);
         }
+    }
+
+    public void RemoveObject(Vector2 coord)
+    {
+        if (TileObject != null)
+        {
+            Endlesness.DestroyGameObject(TileObject);
+        }
+        TileObjectStor.ObjDict[coord] = TileObj.none;
+    }
+
+    public void ActivateObject()
+    {
+        if (TileObject != null)
+        {
+            TileObject.SetActive(true);
+        }
+    }
+
+    public void SwapObject(GameObject NewObj, Vector2 coordnates, TileObj ObjectID)
+    {
+        RemoveObject(coordnates);
+        TileObject = GameObject.Instantiate(NewObj);
+        TileObjectStor.ObjDict[coordnates] = ObjectID;
+        ActivateObject();
     }
 
     public bool IsVis()
