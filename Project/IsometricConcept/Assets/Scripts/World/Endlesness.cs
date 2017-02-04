@@ -7,7 +7,7 @@ public enum TileObj { none, lilipad, driftwood, rock, grass, tree };
 
 public class Endlesness : MonoBehaviour {
 
-    public const float maxViewDist = 7;
+    public const float maxViewDist = 14;
     public Transform viewer;
     public int seed;
     public float scale;
@@ -211,6 +211,8 @@ public class TerrainTile
                     break;
                 case TileObj.lilipad:
                     TileObject = GameObject.Instantiate(lilipad);
+                    BoxCollider boxCol = sprite.GetComponent<BoxCollider>();
+                    boxCol.enabled = false;
                     break;
                 case TileObj.none:
                     break;
@@ -250,11 +252,11 @@ public class TerrainTile
 
     public void RemoveObject(Vector2 coord)
     {
-        if (TileObject != null)
+        if (TileObject != null && TileObjectStor.ObjDict[coord] != TileObj.lilipad && TileObjectStor.ObjDict[coord] != TileObj.none)
         {
             Endlesness.DestroyGameObject(TileObject);
+            TileObjectStor.ObjDict[coord] = TileObj.none;
         }
-        TileObjectStor.ObjDict[coord] = TileObj.none;
     }
 
     public void ActivateObject()
@@ -267,10 +269,13 @@ public class TerrainTile
 
     public void SwapObject(GameObject NewObj, Vector2 coordnates, TileObj ObjectID)
     {
-        RemoveObject(coordnates);
-        TileObject = GameObject.Instantiate(NewObj);
-        TileObjectStor.ObjDict[coordnates] = ObjectID;
-        ActivateObject();
+        if (TileObject != null && TileObjectStor.ObjDict[coordnates] != TileObj.lilipad && TileObjectStor.ObjDict[coordnates] != TileObj.none)
+        {
+            RemoveObject(coordnates);
+            TileObject = GameObject.Instantiate(NewObj);
+            TileObjectStor.ObjDict[coordnates] = ObjectID;
+            ActivateObject();
+        }
     }
 
     public bool IsVis()
